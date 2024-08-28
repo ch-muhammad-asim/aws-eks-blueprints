@@ -22,9 +22,9 @@ module "github_oidc" {
 #   "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
 # ]
 
-  # add inline policies principal of least privilege
+  # add inline policies (principal of least privilege)
   iam_role_inline_policies = {
-    additional_permissions = jsonencode({
+    github_ecr_push_permissions = jsonencode({
       Version = "2012-10-17"
       Statement = [
         {
