@@ -54,3 +54,32 @@ metadata:
   resourceVersion: "1545"
   uid: c6022467-1259-433b-82f4-bd503e1f3041
 ```
+
+- terragrunt architecture
+```bash
+terragrunt/
+├── account.hcl
+├── region.hcl
+├── env
+│   └── dev
+│       ├── region
+│       │   └── us-east-1
+│       │       ├── vpc
+│       │       │   └── terragrunt.hcl
+│       │       └── eks
+│       │           └── terragrunt.hcl
+│       └── terragrunt.hcl
+└── modules
+    ├── eks
+    │   ├── main.tf
+    │   ├── output.tf
+    │   ├── provider.tf
+    │   ├── variables.tf
+    │   └── version.tf
+    └── vpc
+        ├── main.tf
+        ├── output.tf
+        ├── provider.tf
+        ├── variables.tf
+        └── version.tf
+```
