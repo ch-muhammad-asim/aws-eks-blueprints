@@ -510,8 +510,6 @@ module "kubernetes_addons" {
   eks_worker_security_group_id = module.eks.node_security_group_id
 
 
-
-  enable_aws_load_balancer_controller = true
   enable_metrics_server               = true
   enable_cluster_autoscaler           = false
 
