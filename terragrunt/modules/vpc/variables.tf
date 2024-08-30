@@ -36,4 +36,5 @@ variable "database_subnet_group_name" {
 variable "eks_cluster_name" {
     description = "The name of the EKS cluster"
     type        = string
+    default     = "my-cluster" # Add a default value here
 }

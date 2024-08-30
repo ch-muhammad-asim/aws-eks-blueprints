@@ -12,7 +12,7 @@ module "eks" {
   source  = "registry.terraform.io/terraform-aws-modules/eks/aws"
   version = "19.16.0"
 
-  cluster_name                    = var.cluster_name
+  cluster_name                    = var.eks_cluster_name
   cluster_version                 = var.cluster_version
   vpc_id                          = var.vpc_id
   subnet_ids                      = var.subnet_ids
@@ -135,7 +135,7 @@ module "eks" {
   create_node_security_group          = true
   node_security_group_use_name_prefix = false
   node_security_group_tags = {
-    "karpenter.sh/discovery/${var.cluster_name}" = var.cluster_name
+    "karpenter.sh/discovery/${var.eks_cluster_name}" = var.eks_cluster_name
   }
 
 
@@ -239,7 +239,7 @@ module "eks" {
   }
 
   tags = {
-    "karpenter.sh/discovery/${var.cluster_name}" = var.cluster_name
+    "karpenter.sh/discovery/${var.eks_cluster_name}" = var.eks_cluster_name
   }
 
 
@@ -269,7 +269,7 @@ module "allow_eks_access_iam_policy" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-policy"
   version = "5.3.1"
 
-  name          = "allow-eks-access-to-${var.cluster_name}"
+  name          = "allow-eks-access-to-${var.eks_cluster_name}"
   create_policy = true
 
   policy = jsonencode({
@@ -291,7 +291,7 @@ module "eks_admins_iam_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role"
   version = "5.3.1"
 
-  role_name         = "eks-admin-${var.cluster_name}"
+  role_name         = "eks-admin-${var.eks_cluster_name}"
   create_role       = true
   role_requires_mfa = false
 
@@ -308,7 +308,7 @@ module "allow_assume_eks_admins_iam_policy" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-policy"
   version = "5.3.1"
 
-  name          = "allow-assume-eks-admin-iam-role-for-${var.cluster_name}"
+  name          = "allow-assume-eks-admin-iam-role-for-${var.eks_cluster_name}"
   create_policy = true
 
   policy = jsonencode({
@@ -332,7 +332,7 @@ module "eks_admins_iam_group" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-group-with-policies"
   version = "5.3.1"
 
-  name                              = "eks-admin-${var.cluster_name}"
+  name                              = "eks-admin-${var.eks_cluster_name}"
   attach_iam_self_management_policy = false
   create_group                      = true
   custom_group_policy_arns          = [module.allow_assume_eks_admins_iam_policy.arn]
@@ -346,7 +346,7 @@ module "allow_developers_eks_console_access" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-policy"
   version = "5.3.1"
 
-  name          = "eks-developers-console-access-${var.cluster_name}"
+  name          = "eks-developers-console-access-${var.eks_cluster_name}"
   create_policy = true
 
   policy = jsonencode({
@@ -382,7 +382,7 @@ module "eks_developers_iam_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role"
   version = "5.3.1"
 
-  role_name         = "eks-developers-${var.cluster_name}"
+  role_name         = "eks-developers-${var.eks_cluster_name}"
   create_role       = true
   role_requires_mfa = false
 
@@ -414,7 +414,7 @@ module "allow_assume_eks_developers_iam_policy" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-policy"
   version = "5.3.1"
 
-  name          = "allow-assume-eks-developers-iam-role-for-${var.cluster_name}"
+  name          = "allow-assume-eks-developers-iam-role-for-${var.eks_cluster_name}"
   create_policy = true
 
   policy = jsonencode({
@@ -438,7 +438,7 @@ module "eks_developers_iam_group" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-group-with-policies"
   version = "5.3.1"
 
-  name                              = "eks-developers-${var.cluster_name}"
+  name                              = "eks-developers-${var.eks_cluster_name}"
   attach_iam_self_management_policy = false
   create_group                      = true
   custom_group_policy_arns          = [module.allow_assume_eks_developers_iam_policy.arn]
