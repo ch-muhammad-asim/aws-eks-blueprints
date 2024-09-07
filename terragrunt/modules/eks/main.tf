@@ -496,10 +496,29 @@ module "kubernetes_addons" {
   eks_worker_security_group_id = module.eks.node_security_group_id
 
 
-  enable_metrics_server               = true
-  enable_cluster_autoscaler           = false
+  enable_metrics_server                  = true
+  cluster_autoscaler_helm_config = {
+    set = [
+      {
+        name  = "image.repository"
+        value = "registry.k8s.io/autoscaling/cluster-autoscaler"
+      }
+    ]
+  }
 
-  enable_karpenter = true
+  enable_cluster_autoscaler                = true
+  enable_aws_load_balancer_controller      = var.enable_aws_load_balancer_controller
+  aws_load_balancer_controller_helm_config = {
+    version = "1.8.2"
+    set = [
+      {
+        name  = "image.tag"
+        value = "v2.8.2"
+      },
+    ]
+  }
+
+  enable_karpenter = false
   karpenter_helm_config = {
     name       = "karpenter"
     chart      = "karpenter"
@@ -509,7 +528,6 @@ module "kubernetes_addons" {
   }
 }
 
-# https://github.com/terraform-aws-modules/terraform-aws-eks/issues/2525
 provider "helm" {
   kubernetes {
     host                   = module.eks.cluster_endpoint
@@ -519,9 +537,32 @@ provider "helm" {
     exec {
       api_version = "client.authentication.k8s.io/v1beta1"
       command     = "aws"
-      #args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
       args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name, "--profile", "default"]
     }
   }
 
+}
+
+
+data "http" "aws_load_balancer_controller_policy" {
+  count   = var.enable_aws_load_balancer_controller ? 1 : 0
+  url     = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json"
+  request_headers = {
+    Accept = "application/json"
+  }
+}
+
+resource "aws_iam_policy" "aws_load_balancer_controller_policy" {
+  count       = var.enable_aws_load_balancer_controller ? 1 : 0
+  name        = "AWSLoadBalancerControllerPolicy-${var.eks_cluster_name}"
+  path        = "/"
+  description = "IAM policy for AWS Load Balancer Controller"
+  policy = data.http.aws_load_balancer_controller_policy[0].response_body
+}
+
+resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller_role" {
+  count      = var.enable_aws_load_balancer_controller ? 1 : 0
+  policy_arn = aws_iam_policy.aws_load_balancer_controller_policy[0].arn
+  role       = "${var.eks_cluster_name}-aws-load-balancer-controller-sa-irsa"
+  depends_on = [module.kubernetes_addons]
 }
