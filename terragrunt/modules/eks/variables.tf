@@ -23,3 +23,9 @@ variable "vpc_owner_id" {
     description = "The ID of the VPC owner"
     type        = string
 }
+
+variable "enable_aws_load_balancer_controller" {
+    description = "Enable AWS Load Balancer Controller 1 means true 0 means false"
+    type        = bool
+    default     = false
+}
