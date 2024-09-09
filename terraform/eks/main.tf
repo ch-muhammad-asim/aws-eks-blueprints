@@ -507,15 +507,33 @@ module "kubernetes_addons" {
   eks_cluster_id               = module.eks.cluster_name
   eks_cluster_endpoint         = module.eks.cluster_endpoint
   eks_oidc_provider            = module.eks.oidc_provider
-  eks_cluster_version          = local.cluster_version
+  eks_cluster_version          = var.cluster_version
   eks_worker_security_group_id = module.eks.node_security_group_id
 
 
-  enable_metrics_server                   = true
-  enable_cluster_autoscaler              = false
-  enable_aws_load_balancer_controller    = false
+  enable_metrics_server                  = true
+  cluster_autoscaler_helm_config = {
+    set = [
+      {
+        name  = "image.repository"
+        value = "registry.k8s.io/autoscaling/cluster-autoscaler"
+      }
+    ]
+  }
 
-  enable_karpenter = true
+  enable_cluster_autoscaler                = true
+  enable_aws_load_balancer_controller      = var.enable_aws_load_balancer_controller
+  aws_load_balancer_controller_helm_config = {
+    version = "1.8.2"
+    set = [
+      {
+        name  = "image.tag"
+        value = "v2.8.2"
+      },
+    ]
+  }
+
+  enable_karpenter = false
   karpenter_helm_config = {
     name       = "karpenter"
     chart      = "karpenter"
@@ -525,7 +543,6 @@ module "kubernetes_addons" {
   }
 }
 
-# https://github.com/terraform-aws-modules/terraform-aws-eks/issues/2525
 provider "helm" {
   kubernetes {
     host                   = module.eks.cluster_endpoint
