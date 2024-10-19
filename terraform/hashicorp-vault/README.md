@@ -12,11 +12,6 @@ kubectl create secret generic vault-tls \
   --from-file=vault.ca=/mnt/tls/ca.pem \
   --from-file=vault.crt=/mnt/tls/vault.pem \
   --from-file=vault.key=/mnt/tls/vault-key.pem
-
-Optional:
-cd tls
-chmod +x tls.sh
-./tls.sh
 ```
 
 - 2nd Install the HashiCorp Vault Helm chart
