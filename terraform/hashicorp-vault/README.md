@@ -138,17 +138,17 @@ EOF
 vault policy write basic-secret-policy /home/vault/app-policy.hcl
 ```
 
-- Vault Policy troubleshooting
-```bash
-vault kv get secret/data/basic-secret/helloworld
-```
-
 - Now our service account for our pod can access all secrets under secret/basic-secret/* Lets create some secrets.
 
 ```bash
 kubectl -n vault exec -it vault-0 -- sh 
 vault secrets enable -path=secret/ kv-v2
 vault kv put secret/basic-secret/helloworld username=dbuser password=12345678
+```
+
+- Vault Policy troubleshooting
+```bash
+vault kv get secret/basic-secret/helloworld
 ```
 
 - Lets deploy our app and see if it works
