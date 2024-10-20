@@ -153,7 +153,7 @@ vault kv put secret/basic-secret/helloworld username=dbuser password=12345678
 
 - Lets deploy our app and see if it works
 ```bash
-kubectl apply -f ./app/deployment.yaml
+kubectl apply -f deployment.yaml
 kubectl -n example-app get pods
 ```
 
