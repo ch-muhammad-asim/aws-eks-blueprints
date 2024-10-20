@@ -106,7 +106,12 @@ vault write auth/kubernetes/config \
 ```bash
 #Create a role for our app
 
-kubectl -n vault exec -it vault-0 -- sh 
+kubectl -n vault exec -it vault-0 -- sh
+
+vault write auth/kubernetes/role/basic-secret-role \
+   bound_service_account_names="basic-secret" \
+   bound_service_account_namespaces="example-app" \
+   policies="basic-secret-policy"
 
 vault write auth/kubernetes/role/basic-secret-role \
    bound_service_account_names="basic-secret" \
