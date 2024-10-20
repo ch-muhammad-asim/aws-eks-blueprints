@@ -4,7 +4,7 @@
 
 ```bash
 k create ns vault
-chmod +x cloudflare-tls.sh
+chmod +x tls-cloudflare.sh
 ./tls-cloudflare.sh
 
 kubectl create secret generic vault-tls \
