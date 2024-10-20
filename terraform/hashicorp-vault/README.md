@@ -26,11 +26,11 @@ helm repo ls
 helm repo add hashicorp https://helm.releases.hashicorp.com
 helm search repo hashicorp
 helm search repo hashicorp/vault --versions
-helm show values hashicorp/vault --version 0.28.0
-# helm show values hashicorp/vault --version 0.28.0 > vault-values.yaml
+helm show values hashicorp/vault --version 0.28.1
+# helm show values hashicorp/vault --version 0.28.1 > vault-values.yaml
 helm repo update
 
-helm -n vault upgrade --install vault hashicorp/vault --version 0.28.0 --values eks-values.yaml --create-namespace --wait
+helm -n vault upgrade --install vault hashicorp/vault --version 0.28.1 --values eks-values.yaml --create-namespace --wait
 ```
 
 - 4th Run the KMS this will create the serivce account with oidc and overide the existing vault service account
@@ -40,7 +40,7 @@ bash -uvx ./kms.sh
 
 - 5th 
 ```bash
-helm -n vault upgrade --install vault hashicorp/vault --version 0.28.0 --values eks-values.yaml --create-namespace --wait 
+helm -n vault upgrade --install vault hashicorp/vault --version 0.28.1 --values eks-values.yaml --create-namespace --wait 
 ```
 
 - Manually add annotation 
