@@ -20,7 +20,7 @@ dependency "vpc" {
 
 inputs = {
   cluster_name                        = local.eks_cluster_name
-  cluster_version                     = "1.30"
+  cluster_version                     = "1.31"
   vpc_id                              = dependency.vpc.outputs.vpc.vpc_id
   subnet_ids                          = dependency.vpc.outputs.vpc.private_subnets
   vpc_owner_id                        = dependency.vpc.outputs.vpc.vpc_owner_id
