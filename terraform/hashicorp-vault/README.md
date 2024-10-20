@@ -64,7 +64,7 @@ metadata:
     app.kubernetes.io/instance: vault
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: vault
-    helm.sh/chart: vault-0.28.0
+    helm.sh/chart: vault-0.28.1
   name: vault
   namespace: vault
   resourceVersion: "43591"
