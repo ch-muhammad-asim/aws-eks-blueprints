@@ -50,6 +50,7 @@ modules/                    Terraform modules - no backend, no aws provider
 ├── eks/                    control plane, add-ons, system node group, access
 ├── karpenter/              controller, IAM, queue, EC2NodeClass, NodePool
 │   └── manifests/          inflate workload used to exercise scaling
+├── alb-controller-iam/     IAM + Pod Identity for the AWS LB Controller
 └── oidc/github/            GitHub Actions OIDC federation
 
 terragrunt/
@@ -62,10 +63,15 @@ terragrunt/
         ├── vpc/terragrunt.hcl
         ├── eks/terragrunt.hcl
         ├── karpenter/terragrunt.hcl
+        ├── alb-controller-iam/terragrunt.hcl
         └── oidc/github/terragrunt.hcl
 
+kubernetes/                 Helm add-ons, each pinned and end-to-end tested
+├── aws-load-balancer-controller/   ALB/NLB provisioning from Ingress + Service
+└── traefik/                        Traefik v3 ingress behind an NLB
+
 terraform/                  standalone Kubernetes manifests and helper configs
-                            (ALB ingress, ArgoCD, Vault, EBS, legacy Karpenter)
+                            (ArgoCD, Vault, EBS, legacy Karpenter)
 docs/                       sandbox limits, bootstrap, Karpenter, testing
 ```
 
@@ -201,5 +207,6 @@ terragrunt destroy --working-dir vpc
 | 🔄 [docs/migration/](docs/migration/) | What changed from the previous revision and why |
 | ✅ [docs/testing/](docs/testing/) | Validation procedure and recorded results |
 | 🔥 [load-testing/](load-testing/) | HPA + Karpenter load test, commands and recorded results |
+| ☸️ [kubernetes/](kubernetes/) | Helm add-ons: AWS Load Balancer Controller and Traefik, with end-to-end tests |
 
 Index: [docs/](docs/)
