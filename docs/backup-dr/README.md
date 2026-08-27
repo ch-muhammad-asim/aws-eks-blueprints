@@ -94,7 +94,7 @@ In practice you want a scheduled backup plan rather than on-demand jobs, with:
 - **cross-region copy** if your RTO survives a regional event
 - retention matched to a stated RPO, not to a number someone liked
 
-## 🧩 No third-party tooling required
+## 🧩 Native, with no agent in the cluster
 
 AWS Backup protects EKS **natively**. There is no agent, operator or Helm chart
 to install in the cluster - AWS Backup creates its own access entry and reads
@@ -103,17 +103,56 @@ the cluster through the Kubernetes API. From the AWS documentation:
 > "AWS Backup does not require any agents or add-ons to be installed on your
 > Amazon EKS cluster."
 
-That matters for more than convenience. A backup controller running inside the
-cluster shares the cluster's failure modes and its blast radius: it needs
-cluster-admin-level RBAC, it competes for the same nodes, and it is unavailable
-in exactly the scenario where you need it most. Keeping backup outside the data
-plane, in a service with its own IAM boundary, audit trail and vault lock, is
-the stronger position.
+That matters for more than convenience. Any backup controller running inside
+the cluster shares the cluster's failure modes and its blast radius: it needs
+cluster-admin-level RBAC, it competes for the same nodes, and it can be
+unavailable in exactly the scenario where you need it. Keeping the compliance
+copy outside the data plane - in a service with its own IAM boundary, audit
+trail and vault lock - is the stronger default.
+
+That is an argument for AWS Backup being your *baseline*, not an argument
+against in-cluster tooling entirely. Velero solves problems AWS Backup does
+not, and the two compose well - see below.
 
 Everything the cluster needs is already in place here: `authenticationMode` is
 `API`, so AWS Backup can create its access entry, and the EBS CSI driver is
 installed as a managed add-on, so PersistentVolumes are backed by genuine CSI
 volumes that AWS Backup supports.
+
+## 🔁 Velero, alongside AWS Backup
+
+**Velero** is the Kubernetes-native backup tool, and it is worth running *in
+addition to* AWS Backup rather than instead of it. The two cover different
+ground:
+
+| | AWS Backup | Velero |
+|---|---|---|
+| Native EKS resource support | ✅ first-class, no agent | ⚠️ controller + node agent you operate |
+| Managed, audited, IAM-integrated | ✅ | ❌ your responsibility |
+| Vault lock / immutability | ✅ | ⚠️ depends on the object store |
+| Compliance and retention reporting | ✅ | ❌ |
+| Cross-cloud and on-premises | ❌ AWS only | ✅ portable |
+| Namespace- or label-scoped restore | ⚠️ limited | ✅ granular |
+| Backup hooks (quiesce a database mid-backup) | ❌ | ✅ |
+| Cluster-to-cluster migration | ❌ | ✅ |
+
+### How the two divide up in practice
+
+- **AWS Backup** is the compliance and disaster-recovery copy: scheduled,
+  immutable, cross-region, cross-account, reportable, and outside the cluster's
+  blast radius. This is the one an auditor asks about.
+- **Velero** is the operational tool: restore a single namespace a team dropped,
+  quiesce a database with a pre-backup hook so the snapshot is consistent, or
+  lift a workload into a different cluster during a migration or a version
+  upgrade rehearsal.
+
+A useful rule: if the question is *"can we prove we can recover the cluster"*,
+that is AWS Backup. If the question is *"can we put this one namespace back the
+way it was an hour ago"*, that is Velero.
+
+Velero is not deployed by this blueprint. When you add it, give it its own IAM
+role through Pod Identity, its own S3 bucket with versioning and object lock,
+and a `VolumeSnapshotClass` wired to the EBS CSI driver already installed here.
 
 ## 🧪 The part everyone skips
 
@@ -161,3 +200,5 @@ Details of the upgrade mechanics are in [auto-upgrade](../auto-upgrade/).
 | EKS best practices - protecting the cluster | https://docs.aws.amazon.com/eks/latest/best-practices/protecting-the-cluster.html |
 | EKS best practices - cluster upgrades | https://docs.aws.amazon.com/eks/latest/best-practices/cluster-upgrades.html |
 | EKS storage and CSI drivers | https://docs.aws.amazon.com/eks/latest/userguide/storage.html |
+| Velero documentation | https://velero.io/docs/ |
+| Velero AWS plugin | https://github.com/vmware-tanzu/velero-plugin-for-aws |
