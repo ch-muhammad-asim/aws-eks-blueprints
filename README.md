@@ -1,4 +1,4 @@
-# AWS EKS Blueprint - Terragrunt, Karpenter and EKS Auto-scaling
+# 🚀 AWS EKS Blueprint - Terragrunt, Karpenter and EKS Auto-scaling
 
 Opinionated, layered EKS blueprint driven entirely by **Terragrunt**. One set of
 Terraform modules, one Terragrunt unit per layer, and Karpenter instead of
@@ -9,7 +9,7 @@ its guardrails - see [docs/SANDBOX.md](docs/SANDBOX.md).
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
                       ┌──────────────────────────────────────────┐
@@ -42,7 +42,7 @@ outputs through a Terragrunt `dependency` block, and `karpenter` consumes `eks`.
 
 ---
 
-## Layout
+## 📂 Layout
 
 ```
 modules/                    Terraform modules - no backend, no aws provider
@@ -75,7 +75,7 @@ each module usable across every environment and region.
 
 ---
 
-## Versions
+## 📌 Versions
 
 | Component | Version |
 |---|---|
@@ -91,7 +91,7 @@ each module usable across every environment and region.
 
 ---
 
-## Prerequisites
+## ✅ Prerequisites
 
 - AWS credentials for the target account (`aws sts get-caller-identity`)
 - Terraform, Terragrunt, kubectl and helm on `$PATH`
@@ -101,7 +101,7 @@ Point `terragrunt/account.hcl` at your account id, bucket and key alias.
 
 ---
 
-## Deploy
+## 🚢 Deploy
 
 All deployment goes through Terragrunt. Run from
 `terragrunt/env/dev/region/us-east-1`.
@@ -140,7 +140,7 @@ aws eks update-kubeconfig --region us-east-1 --name cloudgeeks-eks-dev
 
 ---
 
-## Verify
+## 🔍 Verify
 
 ```bash
 kubectl get nodes -L node.kubernetes.io/instance-type -L karpenter.sh/nodepool
@@ -166,7 +166,7 @@ returns them after `consolidateAfter`. Full procedure and recorded results:
 
 ---
 
-## Teardown
+## 🧹 Teardown
 
 Reverse dependency order matters: Karpenter's nodes must go before the cluster,
 or the node group delete blocks on orphaned instances.
@@ -185,12 +185,12 @@ terragrunt destroy --working-dir vpc
 
 ---
 
-## Documentation
+## 📚 Documentation
 
 | Document | Contents |
 |---|---|
-| [docs/SANDBOX.md](docs/SANDBOX.md) | Pluralsight sandbox limits and how the code encodes them |
-| [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md) | State bucket and KMS key bootstrap |
-| [docs/KARPENTER.md](docs/KARPENTER.md) | NodePool/EC2NodeClass settings and production tuning |
-| [docs/TESTING.md](docs/TESTING.md) | Validation procedure and recorded results |
-| [docs/MIGRATION.md](docs/MIGRATION.md) | What changed from the previous revision and why |
+| 🧪 [docs/SANDBOX.md](docs/SANDBOX.md) | Pluralsight sandbox limits and how the code encodes them |
+| 🪣 [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md) | State bucket and KMS key bootstrap |
+| ⚡ [docs/KARPENTER.md](docs/KARPENTER.md) | NodePool/EC2NodeClass settings and production tuning |
+| ✅ [docs/TESTING.md](docs/TESTING.md) | Validation procedure and recorded results |
+| 🔄 [docs/MIGRATION.md](docs/MIGRATION.md) | What changed from the previous revision and why |

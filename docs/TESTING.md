@@ -1,9 +1,9 @@
-# Validation and test results
+# 🧪 Validation and test results
 
 Recorded against the Pluralsight AWS sandbox, account `898961940126`,
 `us-east-1`, on 2026-08-27. Every deployment step ran through Terragrunt.
 
-## Environment
+## 🖥️ Environment
 
 | | |
 |---|---|
@@ -14,32 +14,32 @@ Recorded against the Pluralsight AWS sandbox, account `898961940126`,
 | Karpenter | 1.14.1 |
 | System node group | 2 x t3.medium, on-demand |
 
-## Static checks
+## ✅ Static checks
 
 | Check | Result |
 |---|---|
-| `terraform fmt` across all modules | clean |
-| `terragrunt validate` - vpc, eks, karpenter, oidc/github | all "Success! The configuration is valid." |
-| `terragrunt run --all plan` after apply | vpc, eks, karpenter all report "No changes" |
+| `terraform fmt` across all modules | ✅ clean |
+| `terragrunt validate` - vpc, eks, karpenter, oidc/github | ✅ all "Success! The configuration is valid." |
+| `terragrunt run --all plan` after apply | ✅ vpc, eks, karpenter all report "No changes" |
 
 Idempotency is the one worth calling out: a second plan over an applied stack
 produces no diff, which is what tells you the code and the live state actually
 agree.
 
-## Guardrail tests
+## 🚧 Guardrail tests
 
 Each sandbox limit is enforced by a `validation` block. These were tested by
 deliberately passing illegal values:
 
 | Input | Result |
 |---|---|
-| `region = eu-west-1` | rejected - "The sandbox restricts actions to us-east-1 and us-west-2." |
-| `node_disk_size = 150` | rejected - "The sandbox caps EBS volumes at 100 GiB." |
-| `instance_sizes = ["xlarge"]` | rejected - "The sandbox only permits micro, small and medium..." |
+| `region = eu-west-1` | ✅ rejected - "The sandbox restricts actions to us-east-1 and us-west-2." |
+| `node_disk_size = 150` | ✅ rejected - "The sandbox caps EBS volumes at 100 GiB." |
+| `instance_sizes = ["xlarge"]` | ✅ rejected - "The sandbox only permits micro, small and medium..." |
 
 The failures happen at plan time, before any API call.
 
-## Cluster state after deploy
+## 📊 Cluster state after deploy
 
 ```
 6 add-ons active: vpc-cni, kube-proxy, coredns, eks-pod-identity-agent,
@@ -76,22 +76,22 @@ Discovery by tag resolved three private subnets and the shared node security
 group, confirming the `karpenter.sh/discovery` tags on the VPC and EKS layers
 line up.
 
-## Scale-up
+## 📈 Scale-up
 
 `kubectl scale deployment inflate --replicas 6` (6 x 500m CPU request):
 
 | Event | Time |
 |---|---|
-| Scale command issued | 08:18:30 |
-| NodeClaims created | 08:18:40 (**10s**) |
-| Nodes `Ready`, all 6 pods `Running` | 08:19:19 (**49s total**) |
+| 🟢 Scale command issued | 08:18:30 |
+| ⚡ NodeClaims created | 08:18:40 (**10s**) |
+| ✅ Nodes `Ready`, all 6 pods `Running` | 08:19:19 (**49s total**) |
 
 Karpenter chose **2 x t3a.small** rather than the t3.medium the system group
 uses - the pods fit, and t3a.small is cheaper. That instance-type choice is the
 behaviour Cluster Autoscaler cannot produce, because it can only scale node
 groups that were declared in advance.
 
-## Launched-instance posture
+## 🔐 Launched-instance posture
 
 Verified against the running instances with `aws ec2 describe-instances`:
 
@@ -104,14 +104,14 @@ Verified against the running instances with `aws ec2 describe-instances`:
 | Tenancy | default |
 | Root volume | 50 GiB gp3, `Encrypted=true` |
 
-## Consolidation
+## 📉 Consolidation
 
 Repacking, `--replicas 6` → `2`:
 
 | Event | Time |
 |---|---|
-| Scale command issued | 08:20:07 |
-| Down to 1 Karpenter node, both pods rescheduled | 08:26:04 (**~6m**) |
+| 🟢 Scale command issued | 08:20:07 |
+| ✅ Down to 1 Karpenter node, both pods rescheduled | 08:26:04 (**~6m**) |
 
 The elapsed time is `consolidateAfter: 1m` plus the drain, which respects both
 the NodePool disruption budget (1 node at a time) and the workload's
@@ -121,12 +121,12 @@ Full scale-down, `--replicas 2` → `0`:
 
 | Event | Time |
 |---|---|
-| Scale command issued | 08:26:18 |
-| All Karpenter nodes gone, zero NodeClaims | 08:28:18 (**2m**) |
+| 🟢 Scale command issued | 08:26:18 |
+| ✅ All Karpenter nodes gone, zero NodeClaims | 08:28:18 (**2m**) |
 
 The cluster returned to exactly the 2-node system group. Nothing was orphaned.
 
-## Reproducing
+## 🔁 Reproducing
 
 ```bash
 kubectl apply -f modules/karpenter/manifests/inflate.yaml
@@ -150,7 +150,7 @@ Watch the controller reason about it:
 kubectl logs -n kube-system -l app.kubernetes.io/name=karpenter -f
 ```
 
-## Issues found and fixed during testing
+## 🐛 Issues found and fixed during testing
 
 **`LimitExceeded: Cannot exceed quota for PolicySize: 6144`.** The EKS module
 generates a Karpenter controller policy larger than the standard IAM policy

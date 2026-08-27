@@ -1,4 +1,4 @@
-# ARGOCD HA Setup
+# 🐙 ARGOCD HA Setup
 
 - Helm Commands
 ```commandline

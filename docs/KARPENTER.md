@@ -1,11 +1,11 @@
-# Karpenter layer
+# ⚡ Karpenter layer
 
 Karpenter replaces Cluster Autoscaler. Instead of resizing pre-declared node
 groups, it reads pending pods, computes the cheapest instance that fits them,
 and launches it directly through the EC2 fleet API. Node groups stop being a
 capacity-planning exercise.
 
-## What the layer creates
+## 📦 What the layer creates
 
 | Resource | Purpose |
 |---|---|
@@ -17,7 +17,7 @@ capacity-planning exercise.
 | `EC2NodeClass/default` | What an instance looks like - AMI, subnets, SGs, disk, metadata |
 | `NodePool/default` | What may be provisioned, and when it is torn down |
 
-## Settings and why they are set that way
+## 🎛️ Settings and why they are set that way
 
 **Pod Identity over IRSA.** IRSA needs an OIDC provider and a role trust policy
 keyed to a service account name. Pod Identity is an EKS API association, which
@@ -67,7 +67,7 @@ way to discover the problem.
 this is the v1 tag key: v1alpha5 used `karpenter.sh/discovery/<cluster>`, and
 carrying the old key forward is a common upgrade failure.
 
-## Tuning for production
+## 🎯 Tuning for production
 
 The defaults here are shaped by the sandbox. Outside it, change these:
 
@@ -108,7 +108,7 @@ budgets = [
 **Give every workload a PDB.** Consolidation is only as safe as the disruption
 budgets you give it.
 
-## Operating notes
+## 🛠️ Operating notes
 
 Watch what the controller decides:
 

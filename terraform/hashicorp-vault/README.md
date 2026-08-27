@@ -1,4 +1,4 @@
-# AWS HashiCorp Vault for eks
+# 🔐 AWS HashiCorp Vault for eks
 
 - 1st Run Bash Script these will certs in kubernetes secret vault namespace
 
@@ -76,7 +76,7 @@ metadata:
 kubectl -n vault exec -it vault-0 -- vault operator init
 ```
 
-### Enable k8s auth
+### 🔑 Enable k8s auth
 
 Note: When pod run as a service account, it will have a token mounted at /var/run/secrets/kubernetes.io/serviceaccount/token. This token is used to authenticate with the Kubernetes API. The token is scoped to a specific namespace, so it can only access resources in that namespace.
 

@@ -1,4 +1,4 @@
-# Bootstrapping remote state
+# 🪣 Bootstrapping remote state
 
 State storage cannot live in the state it stores, so the bucket and key are
 created once, outside Terraform. Everything after this is Terragrunt.

@@ -1,4 +1,4 @@
-# terraform/
+# 📁 terraform/
 
 Kubernetes manifests and helper configuration that are applied with `kubectl`
 or `helm`, not by Terraform. The infrastructure modules moved to `modules/` and

@@ -1,4 +1,4 @@
-# Deprecated - Karpenter v1alpha5
+# ⚠️ Deprecated - Karpenter v1alpha5
 
 These manifests target the `karpenter.sh/v1alpha5` `Provisioner` and
 `karpenter.k8s.aws/v1alpha1` `AWSNodeTemplate` APIs, which Karpenter removed in
@@ -13,7 +13,7 @@ The supported path is the `karpenter` Terragrunt unit, which manages the v1
 - unit: `terragrunt/env/dev/region/us-east-1/karpenter`
 - guide: [`docs/KARPENTER.md`](../../docs/KARPENTER.md)
 
-## What changed
+## 🔄 What changed
 
 | v1alpha5 | v1 |
 |---|---|

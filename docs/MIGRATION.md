@@ -1,10 +1,10 @@
-# What changed, and why
+# 🔄 What changed, and why
 
 The previous revision of this blueprint was built around EKS module v19, the
 `aws-auth` ConfigMap, Cluster Autoscaler and Karpenter's v1alpha5 APIs. All
 four are now either removed upstream or actively harmful to carry forward.
 
-## Structural
+## 🏗️ Structural
 
 **One copy of each module.** `terraform/vpc` and `terragrunt/modules/vpc` were
 two diverging copies of the same module; same for `eks`. They are now a single
@@ -21,7 +21,7 @@ DynamoDB lock table, SSE-KMS with a customer-managed key, versioning, and a
 lifecycle rule for non-current versions. One less resource to bootstrap and no
 lock-table drift.
 
-## EKS
+## ☸️ EKS
 
 | Before | After | Why |
 |---|---|---|
@@ -40,7 +40,7 @@ The old configuration also referenced `var.cluster_version` and
 `var.eks_cluster_name`, neither of which was ever declared - `terraform
 validate` failed on the committed code.
 
-## Autoscaling
+## ⚡ Autoscaling
 
 **Cluster Autoscaler is gone.** It scaled ASGs that had to be declared per
 instance shape in advance, and the blueprint ran it alongside a disabled
@@ -56,7 +56,7 @@ The discovery tag key changed too: `karpenter.sh/discovery/<cluster>` in
 v1alpha5, `karpenter.sh/discovery` in v1. Carrying the old key forward is the
 most common reason a v1 NodePool provisions nothing.
 
-## Security
+## 🔐 Security
 
 Findings that came out of this pass, listed for the record:
 
