@@ -9,10 +9,40 @@ Kibana for cluster and application logs.
 
 ---
 
-## 🚨 Read this first
+## ✅ What works today
+
+[`logs/eck/`](logs/eck/) — **Elasticsearch 9.1.2 + Kibana 9.1.2** on the ECK
+operator, deployed and verified on this cluster:
+
+```
+elasticsearch/logging   green   1 node   9.1.2   (2m35s to green)
+kibana/logging          green   1        9.1.2   association Established
+write + read round trip -> document indexed and returned
+storage                 -> 8 GiB gp3, EBS CSI, encrypted
+node                    -> t3a.medium, provisioned on demand by Karpenter
+```
+
+```bash
+helm -n elastic-system upgrade --install eck-operator elastic/eck-operator --version 3.5.0 --create-namespace --wait
+```
+
+```bash
+kubectl apply -f logs/eck/00-storageclass.yaml -f logs/eck/10-elasticsearch.yaml
+```
+
+```bash
+kubectl apply -f logs/eck/20-kibana.yaml
+```
+
+Full guide, sizing rationale and verification commands:
+[`logs/eck/README.md`](logs/eck/README.md)
+
+---
+
+## 🚨 Why the old chart was replaced
 
 The chart vendored under [`logs/elasticsearch/`](logs/elasticsearch/) is
-**stale and will not deploy as-is**. Every container image it references has
+**deprecated and will not deploy**. Every container image it references has
 been withdrawn from Docker Hub (verified 2026-08-27):
 
 ```
@@ -37,8 +67,9 @@ a standing CVE exposure regardless of where the images come from.
 
 | Path | Contents |
 |---|---|
-| 📊 [`logs/`](logs/) | [The logging guide](logs/README.md) — status, alternatives, verification |
-| 📦 [`logs/elasticsearch/`](logs/elasticsearch/) | The vendored Bitnami chart (kept for reference) |
+| 📊 [`logs/`](logs/) | [The logging guide](logs/README.md) — options, comparison, verification |
+| 🦌 [`logs/eck/`](logs/eck/) | ✅ **The working stack** — ECK operator, Elasticsearch, Kibana, gp3 storage |
+| 📦 [`logs/elasticsearch/`](logs/elasticsearch/) | ⚠️ Deprecated Bitnami chart, kept for reference |
 | 🏗️ [`terraform/`](terraform/) | Older cluster definitions, superseded by `master` |
 
 ---
@@ -80,10 +111,14 @@ production-shaped Elasticsearch cluster does not fit:
 | 3 master + 3 data + ingest + Kibana | nodes are **t3.medium — 2 vCPU / 4 GiB** |
 | `persistence.size=100Gi` × 6 = 600 GiB | **100 GiB per volume**, nine EC2 instances account-wide |
 
-**Nothing on this branch has been deployed to the live cluster.** The
-verification in the guide is static — `helm lint`, `helm dependency build`, and
-rendering the chart to inspect which images it would pull. That static pass is
-what surfaced the withdrawn images above.
+The `eck/` stack is sized for exactly this: **one** Elasticsearch node at 2 GiB
+with an 8 GiB volume, which fits a t3a.medium and keeps the account at four EC2
+instances. That is what is deployed and verified.
+
+The vendored Bitnami chart was never deployed — its verification was static
+(`helm lint`, `helm dependency build`, and rendering the chart to inspect the
+images it would pull), and that static pass is what surfaced the withdrawn
+images above.
 
 ---
 

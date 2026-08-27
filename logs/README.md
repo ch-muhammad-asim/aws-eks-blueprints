@@ -2,9 +2,12 @@
 
 Elasticsearch and Kibana for cluster and application logs.
 
-> ⚠️ **Read [the status section](#-status-this-vendored-chart-is-stale) before running anything here.** The vendored chart in
-> [`elasticsearch/`](elasticsearch/) is pinned to Bitnami Elasticsearch 8.6.2
-> and references container images that **no longer exist** at the paths it uses.
+> ✅ **Working stack: [`eck/`](eck/)** — Elasticsearch 9.1.2 + Kibana 9.1.2 via
+> the ECK operator, deployed and verified on this cluster.
+>
+> ⚠️ The vendored chart in [`elasticsearch/`](elasticsearch/) is **deprecated**:
+> it is pinned to Bitnami Elasticsearch 8.6.2 and every image it references has
+> been withdrawn from Docker Hub. Kept for reference only.
 
 ---
 
@@ -51,7 +54,24 @@ standing CVE exposure regardless of where the image comes from.
 
 ---
 
-## 🧭 Pick a path forward
+## ✅ The deployed stack
+
+[`eck/`](eck/) is the supported path and is running on this cluster today:
+
+| | |
+|---|---|
+| Operator | `elastic/eck-operator` 3.5.0 |
+| Elasticsearch | 9.1.2, single node, green |
+| Kibana | 9.1.2, association established |
+| Storage | 8 GiB `gp3`, EBS CSI, encrypted |
+| Node | `t3a.medium`, provisioned on demand by Karpenter |
+
+Verified with a real write-and-read round trip, not just a health check. Full
+procedure and recorded output: [`eck/README.md`](eck/README.md).
+
+---
+
+## 🧭 Why not the others
 
 | Option | Chart | When it fits |
 |---|---|---|
@@ -89,7 +109,7 @@ afterwards that carry the real footprint.
 ## 🧪 Sandbox reality check
 
 This blueprint's cluster runs in a **Pluralsight AWS sandbox**
-([limits](../docs/sandbox/)), which makes the settings in `commands.txt`
+([limits](https://github.com/ch-muhammad-asim/aws-eks-blueprints/tree/master/docs/sandbox)), which makes the settings in `commands.txt`
 impossible:
 
 | `commands.txt` asks for | Sandbox allows |
@@ -209,11 +229,11 @@ limit, and the container needs more than the heap. This is why the sandbox's
 t3.medium nodes cannot host a realistic cluster.
 
 **Use `gp3`, not `gp2`.** The EBS CSI driver is installed by the
-[`eks`](../modules/eks) module; set `global.storageClass` explicitly rather
+[`eks`](https://github.com/ch-muhammad-asim/aws-eks-blueprints/tree/master/modules/eks) module; set `global.storageClass` explicitly rather
 than inheriting whatever the cluster default happens to be.
 
 **Back the data up.** A search cluster holds state Terraform cannot recreate —
-see [backup-dr](../docs/backup-dr/).
+see [backup-dr](https://github.com/ch-muhammad-asim/aws-eks-blueprints/tree/master/docs/backup-dr).
 
 ---
 

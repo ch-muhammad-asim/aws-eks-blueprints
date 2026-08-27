@@ -1,0 +1,56 @@
+###############################################################################
+# Elasticsearch, managed by the ECK operator
+#
+# Sized for the Pluralsight sandbox: a single node on t3.medium-class capacity.
+# The operator handles the StatefulSet, TLS certificates, bootstrap passwords
+# and rolling upgrades - none of which are in this file, which is the point of
+# using an operator rather than a chart full of templated StatefulSets.
+###############################################################################
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: logging
+  namespace: logging
+spec:
+  version: 9.1.2
+
+  # Disable the paid feature check; this is a basic-licence deployment.
+  nodeSets:
+    - name: default
+      count: 1
+      config:
+        # Single node: no quorum to form, and no replicas to allocate. On a
+        # multi-node cluster remove this and let the operator elect masters.
+        node.store.allow_mmap: false
+        node.roles: ["master", "data", "ingest"]
+      podTemplate:
+        spec:
+          # Land on Karpenter capacity rather than the system node group, which
+          # is already carrying the platform add-ons.
+          nodeSelector:
+            provisioned-by: karpenter
+          containers:
+            - name: elasticsearch
+              env:
+                # Heap should be about half the container limit. Elasticsearch
+                # needs the other half for off-heap structures and Lucene.
+                - name: ES_JAVA_OPTS
+                  value: -Xms1g -Xmx1g
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                limits:
+                  # No CPU limit: throttling the JVM causes GC pauses that look
+                  # like cluster instability.
+                  memory: 2Gi
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 8Gi
+            storageClassName: gp3

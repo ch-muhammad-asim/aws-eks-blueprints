@@ -1,0 +1,25 @@
+###############################################################################
+# gp3 StorageClass backed by the EBS CSI driver
+#
+# The cluster only ships the in-tree `gp2` class, which is served through CSI
+# migration. That matters twice over: gp3 is cheaper and faster than gp2 at the
+# same size, and AWS Backup does not support CSI-migrated volumes - only
+# volumes provisioned by a genuine CSI StorageClass like this one.
+###############################################################################
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  encrypted: "true"
+  fsType: ext4
+# Elasticsearch data must survive a pod restart; Retain would leak volumes on
+# every teardown, so Delete plus real backups is the right trade here.
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+# Bind only once a pod is scheduled, so the volume lands in the AZ the pod does.
+volumeBindingMode: WaitForFirstConsumer

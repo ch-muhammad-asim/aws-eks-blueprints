@@ -1,0 +1,28 @@
+###############################################################################
+# Kibana, wired to the Elasticsearch above by reference
+#
+# elasticsearchRef is all the wiring needed - the operator creates the service
+# account, the credentials and the TLS trust between the two.
+###############################################################################
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: logging
+  namespace: logging
+spec:
+  version: 9.1.2
+  count: 1
+  elasticsearchRef:
+    name: logging
+  podTemplate:
+    spec:
+      nodeSelector:
+        provisioned-by: karpenter
+      containers:
+        - name: kibana
+          resources:
+            requests:
+              cpu: 200m
+              memory: 1Gi
+            limits:
+              memory: 1Gi
