@@ -1,9 +1,9 @@
 include "root" {
-  path = find_in_parent_folders()
+  path = find_in_parent_folders("root.hcl")
 }
 
 terraform {
-  source = "../../../../../../modules//oidc/github"
+  source = "${get_repo_root()}/modules//oidc/github"
 }
 
 inputs = {

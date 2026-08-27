@@ -1,26 +1,23 @@
-#  If you don't set the environment variable, it will fall back to using "my-cluster"
-# export TF_VAR_eks_cluster_name='cloudgeeks-eks-dev'
+###############################################################################
+# VPC - three-AZ network with private subnets tagged for Karpenter discovery
+###############################################################################
 
 include "root" {
-  path = find_in_parent_folders()
+  path = find_in_parent_folders("root.hcl")
 }
-
-locals {
-  eks_cluster_name = get_env("TF_VAR_eks_cluster_name", "my-cluster")
-}
-
 
 terraform {
-  source = "../../../../../modules//vpc"
+  source = "${get_repo_root()}/modules//vpc"
 }
 
 inputs = {
-  vpc_cidr                   = "10.60.0.0/16"
-  azs                        = ["us-east-1a", "us-east-1b", "us-east-1c"]
-  private_subnets            = ["10.60.0.0/23", "10.60.2.0/23", "10.60.4.0/23"]
-  public_subnets             = ["10.60.100.0/23", "10.60.102.0/24", "10.60.104.0/24"]
-  database_subnets           = ["10.60.11.0/24", "10.60.12.0/24", "10.60.13.0/24"]
-  vpc_name                   = "my-vpc"
-  cluster_name               = local.eks_cluster_name
-  database_subnet_group_name = "my-database-subnet-group"
+  vpc_cidr = "10.60.0.0/16"
+  az_count = 3
+
+  # One NAT Gateway instead of one per AZ. Sandbox-appropriate; flip to false
+  # for production, where a single-AZ NAT outage takes out all egress.
+  single_nat_gateway = true
+
+  enable_database_subnets = false
+  enable_flow_log         = false
 }
