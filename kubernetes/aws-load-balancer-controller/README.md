@@ -173,11 +173,11 @@ kubectl -n kube-system logs -l app.kubernetes.io/name=aws-load-balancer-controll
 
 ## ✅ End-to-end test
 
-[`examples/demo-ingress.yaml`](examples/demo-ingress.yaml) deploys an echo
+[`../alb-ingress/demo-ingress.yaml`](../alb-ingress/demo-ingress.yaml) deploys an echo
 server behind a real internet-facing ALB.
 
 ```bash
-kubectl apply -f examples/demo-ingress.yaml
+kubectl apply -f ../alb-ingress/demo-ingress.yaml
 ```
 
 ```bash
@@ -219,7 +219,7 @@ kubectl get targetgroupbindings -A
 Tear the test down:
 
 ```bash
-kubectl delete -f examples/demo-ingress.yaml
+kubectl delete -f ../alb-ingress/demo-ingress.yaml
 ```
 
 ---

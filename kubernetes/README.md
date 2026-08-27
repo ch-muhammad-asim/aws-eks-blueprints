@@ -4,10 +4,19 @@ Helm-installed components that sit on top of the Terragrunt-managed cluster.
 Each directory pins a single `CHART_VERSION`, installs CRDs explicitly before
 the chart, and ships a working end-to-end test.
 
+### Controllers
+
 | Directory | Component | Chart | Fronted by |
 |---|---|---|---|
 | 🎛️ [aws-load-balancer-controller/](aws-load-balancer-controller/) | AWS Load Balancer Controller v3.5.0 | `eks/aws-load-balancer-controller` 3.5.0 | ALB per Ingress (or shared by group) |
 | 🚦 [traefik/](traefik/) | Traefik Proxy v3.7.11 | `traefik/traefik` 41.3.0 | one NLB |
+
+### Routing resources
+
+| Directory | Kind | Routes |
+|---|---|---|
+| 🌐 [alb-ingress/](alb-ingress/) | `Ingress` | path-based demo behind a real ALB |
+| 🧭 [traefik-ingressroute/](traefik-ingressroute/) | `IngressRoute` + `Middleware` | path-based demo, and `app.saqlainmushtaq.com` host route with security headers |
 
 Install the AWS Load Balancer Controller **first** — Traefik's `Service` of type
 `LoadBalancer` is provisioned by it.

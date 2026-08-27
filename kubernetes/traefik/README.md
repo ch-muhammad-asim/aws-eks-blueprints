@@ -169,12 +169,12 @@ kubectl -n traefik exec deploy/traefik -- wget -qO- http://localhost:9000/ping
 
 ## ✅ End-to-end test
 
-[`examples/demo-ingressroute.yaml`](examples/demo-ingressroute.yaml) deploys
+[`../traefik-ingressroute/demo-ingressroute.yaml`](../traefik-ingressroute/demo-ingressroute.yaml) deploys
 `whoami` behind an `IngressRoute` with a response-header `Middleware`, which
 proves the CRD provider is doing more than plain routing.
 
 ```bash
-kubectl apply -f examples/demo-ingressroute.yaml
+kubectl apply -f ../traefik-ingressroute/demo-ingressroute.yaml
 ```
 
 ```bash
@@ -210,7 +210,7 @@ returned **HTTP 200** with `X-Served-By: traefik-eks`; both target groups
 Tear the test down:
 
 ```bash
-kubectl delete -f examples/demo-ingressroute.yaml
+kubectl delete -f ../traefik-ingressroute/demo-ingressroute.yaml
 ```
 
 ---

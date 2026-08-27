@@ -66,9 +66,11 @@ terragrunt/
         ├── alb-controller-iam/terragrunt.hcl
         └── oidc/github/terragrunt.hcl
 
-kubernetes/                 Helm add-ons, each pinned and end-to-end tested
+kubernetes/                 Helm add-ons and routing, each pinned and end-to-end tested
 ├── aws-load-balancer-controller/   ALB/NLB provisioning from Ingress + Service
-└── traefik/                        Traefik v3 ingress behind an NLB
+├── alb-ingress/                    Ingress resources served by an ALB
+├── traefik/                        Traefik v3 ingress behind an NLB
+└── traefik-ingressroute/           IngressRoute + Middleware routing
 
 terraform/                  standalone Kubernetes manifests and helper configs
                             (ArgoCD, Vault, EBS, legacy Karpenter)
@@ -207,6 +209,6 @@ terragrunt destroy --working-dir vpc
 | 🔄 [docs/migration/](docs/migration/) | What changed from the previous revision and why |
 | ✅ [docs/testing/](docs/testing/) | Validation procedure and recorded results |
 | 🔥 [load-testing/](load-testing/) | HPA + Karpenter load test, commands and recorded results |
-| ☸️ [kubernetes/](kubernetes/) | Helm add-ons: AWS Load Balancer Controller and Traefik, with end-to-end tests |
+| ☸️ [kubernetes/](kubernetes/) | Ingress: AWS Load Balancer Controller, Traefik, and their routing resources |
 
 Index: [docs/](docs/)
