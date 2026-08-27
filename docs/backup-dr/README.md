@@ -27,8 +27,9 @@ cluster's *contents*.
 
 ## 🛡️ AWS Backup for Amazon EKS
 
-AWS Backup supports EKS as a first-class resource type. A single backup job
-produces a **composite recovery point** containing:
+AWS Backup supports EKS as a first-class, **native** resource type - the same
+way it protects RDS or EBS. A single backup job produces a **composite recovery
+point** containing:
 
 - **EKS cluster state** - the Kubernetes manifests defining desired state:
   Secrets, ConfigMaps, StatefulSets, DaemonSets, StorageClasses, PVCs, CRDs,
@@ -93,21 +94,26 @@ In practice you want a scheduled backup plan rather than on-demand jobs, with:
 - **cross-region copy** if your RTO survives a regional event
 - retention matched to a stated RPO, not to a number someone liked
 
-## 🔁 The alternative: Velero
+## 🧩 No third-party tooling required
 
-AWS Backup is the managed path. **Velero** remains the Kubernetes-native option
-and is worth knowing about because it does things AWS Backup does not:
+AWS Backup protects EKS **natively**. There is no agent, operator or Helm chart
+to install in the cluster - AWS Backup creates its own access entry and reads
+the cluster through the Kubernetes API. From the AWS documentation:
 
-| | AWS Backup | Velero |
-|---|---|---|
-| Runs in-cluster | ❌ no agent | ✅ controller + node agent |
-| Cross-cloud / on-prem | ❌ AWS only | ✅ portable |
-| Namespace-scoped restore | ⚠️ limited | ✅ granular |
-| Backup hooks (quiesce a database) | ❌ | ✅ |
-| Managed, audited, IAM-integrated | ✅ | ❌ you operate it |
+> "AWS Backup does not require any agents or add-ons to be installed on your
+> Amazon EKS cluster."
 
-Many teams run both: AWS Backup for compliance and volume snapshots, Velero for
-granular namespace restores and migrations.
+That matters for more than convenience. A backup controller running inside the
+cluster shares the cluster's failure modes and its blast radius: it needs
+cluster-admin-level RBAC, it competes for the same nodes, and it is unavailable
+in exactly the scenario where you need it most. Keeping backup outside the data
+plane, in a service with its own IAM boundary, audit trail and vault lock, is
+the stronger position.
+
+Everything the cluster needs is already in place here: `authenticationMode` is
+`API`, so AWS Backup can create its access entry, and the EBS CSI driver is
+installed as a managed add-on, so PersistentVolumes are backed by genuine CSI
+volumes that AWS Backup supports.
 
 ## 🧪 The part everyone skips
 
@@ -155,4 +161,3 @@ Details of the upgrade mechanics are in [auto-upgrade](../auto-upgrade/).
 | EKS best practices - protecting the cluster | https://docs.aws.amazon.com/eks/latest/best-practices/protecting-the-cluster.html |
 | EKS best practices - cluster upgrades | https://docs.aws.amazon.com/eks/latest/best-practices/cluster-upgrades.html |
 | EKS storage and CSI drivers | https://docs.aws.amazon.com/eks/latest/userguide/storage.html |
-| Velero | https://velero.io/docs/ |
