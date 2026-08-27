@@ -43,6 +43,62 @@ kubectl apply -f app-ingressroute.yaml
 
 ---
 
+## ☁️ Behind Cloudflare (proxied)
+
+If the record is **proxied** (orange cloud), Cloudflare terminates TLS at the
+edge and opens a **second** connection to the origin. Which port it uses is
+decided by the zone's SSL/TLS mode:
+
+| Cloudflare SSL mode | Connects to origin on | Needs a route on |
+|---|---|---|
+| Flexible | HTTP :80 | `web` |
+| **Full** (default) | HTTPS :443, certificate **not** validated | `websecure` + any cert |
+| Full (strict) | HTTPS :443, certificate **validated** | `websecure` + a trusted cert |
+
+> ⚠️ **The failure this causes.** In **Full** mode an IngressRoute that only
+> lists `entryPoints: [web]` returns a bare **`404 page not found`** in the
+> browser - while `curl` against port 80 returns a perfect 200. Cloudflare is
+> hitting 443, where no router exists. Nothing in the 404 hints at the cause.
+>
+> [`app-ingressroute.yaml`](app-ingressroute.yaml) therefore serves **both**
+> entrypoints and carries an empty `tls: {}` block, which terminates TLS with
+> Traefik's built-in self-signed certificate. Full mode accepts it because it
+> does not validate the origin certificate.
+
+For **Full (strict)**, issue a Cloudflare Origin CA certificate
+(SSL/TLS → Origin Server → Create Certificate) and reference it:
+
+```bash
+kubectl -n app-demo create secret tls app-tls --cert=origin.pem --key=origin-key.pem
+```
+
+```yaml
+  tls:
+    secretName: app-tls
+```
+
+Diagnose the origin directly, bypassing Cloudflare entirely - test **both**
+ports, because that is what separates this failure from a routing mistake:
+
+```bash
+export NLB_IP=$(dig +short "$(kubectl -n traefik get svc traefik -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')" | head -1)
+```
+
+```bash
+curl -s -o /dev/null -w 'http  %{http_code}
+' --resolve "app.saqlainmushtaq.com:80:$NLB_IP" "http://app.saqlainmushtaq.com/"
+```
+
+```bash
+curl -sk -o /dev/null -w 'https %{http_code}
+' --resolve "app.saqlainmushtaq.com:443:$NLB_IP" "https://app.saqlainmushtaq.com/"
+```
+
+`http 200` with `https 404` is this exact problem.
+
+Cloudflare adds headers you can use to confirm the request really came through
+the edge - `Cf-Ray`, `Cf-Connecting-Ip`, `Cf-Visitor` and `X-Forwarded-Proto`.
+
 ## 🌐 DNS
 
 Point the hostname at Traefik's NLB with a **CNAME** — never an A record, since
@@ -124,6 +180,21 @@ Hostname: app-5d4784c9c7-gdvgp
 
 Both NLB addresses returned 200 and traffic landed on both replicas, so the
 route, the middleware chain and cross-AZ balancing all work.
+
+Then through Cloudflare (proxied CNAME, SSL mode **Full**) at
+`https://app.saqlainmushtaq.com` — after adding the `websecure` entrypoint:
+
+```
+Hostname: app-5d4784c9c7-gdvgp
+X-Forwarded-Proto: https
+X-Forwarded-Port: 443
+X-Forwarded-Server: traefik-5dfb9b6487-s9b96
+Cf-Visitor: {"scheme":"https"}
+Cf-Ray: a3191ade68777d50-SIN
+```
+
+Before that change the same URL returned `404 page not found` while port 80
+answered 200 — see the Cloudflare section above.
 
 ---
 

@@ -92,8 +92,14 @@ metadata:
     # answers 404.
     kubernetes.io/ingress.class: traefik-external
 spec:
+  # Both entrypoints. Serving only `web` is the classic Cloudflare failure: with
+  # SSL mode "Full" (the default) Cloudflare connects to the origin over HTTPS
+  # on 443, finds no router on websecure, and returns Traefik's bare
+  # "404 page not found" - even though port 80 works perfectly when tested
+  # directly.
   entryPoints:
     - web
+    - websecure
   routes:
     - match: Host(`app.saqlainmushtaq.com`)
       kind: Rule
@@ -102,29 +108,26 @@ spec:
       services:
         - name: app
           port: 80
+  # Empty tls block = terminate TLS with Traefik's built-in default certificate.
+  # It is self-signed, which Cloudflare "Full" accepts because it does not
+  # validate the origin certificate. For "Full (strict)" install a Cloudflare
+  # Origin CA certificate and reference it as secretName below.
+  tls: {}
 ---
 ###############################################################################
-# TLS variant - enable once a certificate Secret exists in this namespace
-# (cert-manager, or kubectl create secret tls app-tls --cert= --key=).
+# Full (strict) with a Cloudflare Origin CA certificate
 #
-# apiVersion: traefik.io/v1alpha1
-# kind: IngressRoute
-# metadata:
-#   name: app-tls
-#   namespace: app-demo
-#   annotations:
-#     kubernetes.io/ingress.class: traefik-external
-# spec:
-#   entryPoints:
-#     - websecure
-#   routes:
-#     - match: Host(`app.saqlainmushtaq.com`)
-#       kind: Rule
-#       middlewares:
-#         - name: security-headers
-#       services:
-#         - name: app
-#           port: 80
+# Generate the certificate in Cloudflare (SSL/TLS -> Origin Server -> Create
+# Certificate), then:
+#
+#   kubectl -n app-demo create secret tls app-tls \
+#     --cert=origin.pem --key=origin-key.pem
+#
+# and swap the empty tls block above for:
+#
 #   tls:
 #     secretName: app-tls
+#
+# Cloudflare then validates the origin certificate, and the hop between
+# Cloudflare and the NLB is authenticated rather than merely encrypted.
 ###############################################################################
