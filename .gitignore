@@ -1,0 +1,13 @@
+# Terraform / Terragrunt
+.terraform/
+.terraform.lock.hcl
+.terragrunt-cache/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+
+# Keys and certificates - never commit these
+*.pem
+*.key
+id_rsa*
