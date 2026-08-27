@@ -171,6 +171,6 @@ not a bug.
 
 ## 📚 Related
 
-- [`docs/KARPENTER.md`](../docs/KARPENTER.md) - NodePool settings and production tuning
-- [`docs/SANDBOX.md`](../docs/SANDBOX.md) - the sandbox limits this test is bounded by
-- [`docs/TESTING.md`](../docs/TESTING.md) - full blueprint validation results
+- [`docs/karpenter/`](../docs/karpenter/) - NodePool settings and production tuning
+- [`docs/sandbox/`](../docs/sandbox/) - the sandbox limits this test is bounded by
+- [`docs/testing/`](../docs/testing/) - full blueprint validation results

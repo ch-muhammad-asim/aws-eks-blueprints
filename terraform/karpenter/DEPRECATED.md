@@ -11,7 +11,7 @@ The supported path is the `karpenter` Terragrunt unit, which manages the v1
 
 - module: [`modules/karpenter`](../../modules/karpenter)
 - unit: `terragrunt/env/dev/region/us-east-1/karpenter`
-- guide: [`docs/KARPENTER.md`](../../docs/KARPENTER.md)
+- guide: [`docs/karpenter/`](../../docs/karpenter/)
 
 ## 🔄 What changed
 

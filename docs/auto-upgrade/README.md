@@ -64,6 +64,64 @@ terragrunt apply --working-dir terragrunt/env/dev/region/us-east-1/eks
 EKS upgrades one minor version at a time, so 1.36 → 1.38 must be done as two
 applies.
 
+### ⚠️ Is that bump safe? Caveats before you run it
+
+Changing one line in `env.hcl` is a **one-way, cluster-wide** operation. Read
+this before you type it in production.
+
+**It cannot be undone.** EKS does not downgrade a control plane. If a workload
+breaks on 1.37, the only path is forward - fix the workload. There is no
+`kubernetes_version = "1.36"` rollback.
+
+**Deprecated and removed APIs are the usual failure.** The API server stops
+serving removed versions the moment the control plane upgrades, and every
+manifest, Helm chart and operator still using them breaks at once. No backup
+product fixes this; the manifest is simply invalid on the new version. Check the
+target version's release notes and run the readiness insights:
+
+```bash
+aws eks list-insights --cluster-name cloudgeeks-eks-dev --query "insights[?insightStatus.status!='PASSING']"
+```
+
+An empty result is the only acceptable answer.
+
+**The version skew rule binds the order.** The control plane upgrades first,
+then nodes. Nodes may trail the control plane, never lead it. Terraform handles
+the ordering, but it means a cluster spends the upgrade window running mixed
+kubelet versions - a workload that cannot tolerate that needs a maintenance
+window.
+
+**Node rotation is a real disruption.** After the control plane moves, the
+managed node group rolls and Karpenter marks its nodes `Drifted` and replaces
+them. Every pod in the cluster gets rescheduled. That is only safe if
+PodDisruptionBudgets are correct - and a PDB that can never be satisfied will
+stall the rollout instead, which is its own incident.
+
+**Add-ons have their own compatibility matrix.** vpc-cni, CoreDNS, kube-proxy
+and the EBS CSI driver each support a range of Kubernetes versions.
+`most_recent = true` handles this on apply, but an add-on pinned to a fixed
+version will block or break the upgrade.
+
+**Stateful workloads deserve a backup first.** See
+[backup-dr](../backup-dr/) - take an on-demand AWS Backup job and
+confirm it completed, not `Partial`, before starting.
+
+### ✅ The production sequence
+
+1. Read the target version's release notes for removed APIs and behaviour
+   changes.
+2. Confirm all upgrade-readiness insights pass.
+3. Take and verify a backup of cluster state and persistent volumes.
+4. Upgrade a non-production cluster on the same version, and let it soak.
+5. Confirm PodDisruptionBudgets are satisfiable - a stuck drain is the most
+   common upgrade stall.
+6. Bump `kubernetes_version`, `terragrunt plan`, review, apply.
+7. Watch nodes roll: `kubectl get nodes -w` and `kubectl get nodeclaims -w`.
+8. Re-run the insights afterwards, and upgrade add-ons if any lagged.
+
+In a sandbox, steps 3 and 4 are skippable and the whole thing is a five-minute
+exercise. In production they are the job.
+
 ## ✅ What this blueprint automates, at no extra cost
 
 | Layer | Mechanism | Behaviour |
@@ -129,7 +187,7 @@ after.
 The other half of safety is disruption control, which the blueprint already
 sets: PodDisruptionBudgets on workloads, a NodePool disruption budget of one
 node at a time, and `terminationGracePeriod` so a stuck drain cannot hang a
-rotation forever. See [KARPENTER.md](KARPENTER.md).
+rotation forever. See [karpenter](../karpenter/).
 
 ## 🎯 Getting closest to GKE behaviour
 

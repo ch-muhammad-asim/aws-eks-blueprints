@@ -5,7 +5,7 @@ Terraform modules, one Terragrunt unit per layer, and Karpenter instead of
 Cluster Autoscaler for node provisioning.
 
 Tuned to run inside a **Pluralsight AWS cloud sandbox** without tripping any of
-its guardrails - see [docs/SANDBOX.md](docs/SANDBOX.md).
+its guardrails - see [docs/sandbox/](docs/sandbox/).
 
 ---
 
@@ -95,7 +95,7 @@ each module usable across every environment and region.
 
 - AWS credentials for the target account (`aws sts get-caller-identity`)
 - Terraform, Terragrunt, kubectl and helm on `$PATH`
-- A state bucket and KMS key - see [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md)
+- A state bucket and KMS key - see [docs/bootstrap/](docs/bootstrap/)
 
 Point `terragrunt/account.hcl` at your account id, bucket and key alias.
 
@@ -166,7 +166,7 @@ returns them after `consolidateAfter`.
 For a realistic end-to-end test - CPU load driving the HPA, the HPA driving
 Karpenter - use the load-testing suite, which has its own guardrails and
 recorded timings: [load-testing/](load-testing/). Blueprint-wide validation
-results are in [docs/TESTING.md](docs/TESTING.md).
+results are in [docs/testing/](docs/testing/).
 
 ---
 
@@ -193,10 +193,13 @@ terragrunt destroy --working-dir vpc
 
 | Document | Contents |
 |---|---|
-| 🧪 [docs/SANDBOX.md](docs/SANDBOX.md) | Pluralsight sandbox limits and how the code encodes them |
-| 🪣 [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md) | State bucket and KMS key bootstrap |
-| ⚡ [docs/KARPENTER.md](docs/KARPENTER.md) | NodePool/EC2NodeClass settings and production tuning |
-| ✅ [docs/TESTING.md](docs/TESTING.md) | Validation procedure and recorded results |
-| 🔄 [docs/MIGRATION.md](docs/MIGRATION.md) | What changed from the previous revision and why |
-| ⬆️ [docs/AUTO-UPGRADE.md](docs/AUTO-UPGRADE.md) | What EKS auto-upgrades (and what it does not, versus GKE) |
+| 🧪 [docs/sandbox/](docs/sandbox/) | Pluralsight sandbox limits and how the code encodes them |
+| 🪣 [docs/bootstrap/](docs/bootstrap/) | State bucket and KMS key bootstrap |
+| ⚡ [docs/karpenter/](docs/karpenter/) | NodePool/EC2NodeClass settings and production tuning |
+| ⬆️ [docs/auto-upgrade/](docs/auto-upgrade/) | What EKS auto-upgrades (and what it does not, versus GKE) |
+| 💾 [docs/backup-dr/](docs/backup-dr/) | AWS Backup for EKS, its gaps, and restore drills |
+| 🔄 [docs/migration/](docs/migration/) | What changed from the previous revision and why |
+| ✅ [docs/testing/](docs/testing/) | Validation procedure and recorded results |
 | 🔥 [load-testing/](load-testing/) | HPA + Karpenter load test, commands and recorded results |
+
+Index: [docs/](docs/)

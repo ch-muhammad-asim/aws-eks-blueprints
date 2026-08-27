@@ -54,7 +54,7 @@ Together with `amiSelectorTerms: alias al2023@latest`, this is what gives the
 data plane GKE-style node auto-upgrade at no extra cost: a new AL2023 release
 marks nodes `Drifted` and Karpenter replaces them, respecting PodDisruptionBudgets
 and the NodePool disruption budget. The control-plane side of that story is in
-[AUTO-UPGRADE.md](AUTO-UPGRADE.md).
+[auto-upgrade](../auto-upgrade/).
 
 **`terminationGracePeriod: 24h`.** A ceiling on how long a drain may hang. A
 pod with a broken `preStop` hook or a PDB that can never be satisfied will

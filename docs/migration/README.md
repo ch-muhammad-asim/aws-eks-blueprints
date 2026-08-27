@@ -35,7 +35,7 @@ lock-table drift.
 | AL2 | AL2023 | AL2 is end-of-life for EKS |
 | no IMDS hardening | IMDSv2 required, hop limit 1 | blocks container-to-node-role credential theft |
 | - | `node_repair_config` | EKS replaces unhealthy nodes without operator involvement |
-| AWS default `upgradePolicy` (`EXTENDED`) | `STANDARD` | the default parks a cluster on an end-of-life version at premium pricing instead of upgrading it - see [AUTO-UPGRADE.md](AUTO-UPGRADE.md) |
+| AWS default `upgradePolicy` (`EXTENDED`) | `STANDARD` | the default parks a cluster on an end-of-life version at premium pricing instead of upgrading it - see [auto-upgrade](../auto-upgrade/) |
 | AMI pinned at node group creation | `use_latest_ami_release_version` | a managed node group never patches itself otherwise |
 
 The old configuration also referenced `var.cluster_version` and

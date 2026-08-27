@@ -91,7 +91,7 @@ UPGRADE_READINESS   Cluster health issues              PASSING
 ```
 
 Auto Mode confirmed off (`computeConfig.enabled: false`), which is correct for a
-cluster running its own Karpenter. Details in [AUTO-UPGRADE.md](AUTO-UPGRADE.md).
+cluster running its own Karpenter. Details in [auto-upgrade](../auto-upgrade/).
 
 ## 📈 Scale-up
 
