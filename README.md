@@ -85,7 +85,7 @@ each module usable across every environment and region.
 | Helm provider | ~> 3.0 |
 | `terraform-aws-modules/eks/aws` | ~> 21.25 |
 | `terraform-aws-modules/vpc/aws` | ~> 6.7 |
-| Kubernetes / EKS | 1.36 (standard support, auto-upgrade on) |
+| Kubernetes / EKS | 1.36 (standard support; `supportType = STANDARD`) |
 | Karpenter | 1.14.1 (v1 APIs) |
 | Node AMI | AL2023 |
 

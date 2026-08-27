@@ -47,4 +47,22 @@ inputs = {
   enabled_log_types = []
 
   create_iam_access_roles = true
+
+  ###########################################################################
+  # Version support policy
+  #
+  # STANDARD  - AWS force-upgrades the cluster when its Kubernetes version
+  #             reaches end of standard support. No extended-support charges.
+  # EXTENDED  - the AWS default. The cluster stays on its version past end of
+  #             standard support and bills a premium per cluster hour.
+  #
+  # What STANDARD does NOT do: it does not track new releases. It will not move
+  # this cluster from 1.36 to 1.37 when 1.37 ships. It fires once, on 1.36's
+  # end-of-standard-support date, and lands on whatever is in standard support
+  # then. To upgrade before that, bump kubernetes_version in env/dev/env.hcl.
+  #
+  #   aws eks describe-cluster-versions \
+  #     --query "clusterVersions[].{v:clusterVersion,eos:endOfStandardSupportDate}"
+  ###########################################################################
+  cluster_support_type = "STANDARD"
 }

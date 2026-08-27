@@ -20,11 +20,55 @@ getting EKS behaviour is how clusters end up two versions behind.
 | Node auto-repair | ✅ built in | ✅ managed node group `nodeRepairConfig` |
 | Extra cost for any of it | free | free, except Auto Mode |
 
+## ❌ What `STANDARD` will not do
+
+It will **not** move this cluster from 1.36 to 1.37 when 1.37 ships.
+
+`STANDARD` is a single, deadline-driven event, not a subscription to new
+releases. It fires once - on the running version's end-of-standard-support date
+- and lands on whatever is in standard support at that moment.
+
+Concretely, as of 2026-08-27:
+
+| Version | Status | End of standard support |
+|---|---|---|
+| **1.36** | standard (default) | **2027-08-02** |
+| 1.35 | standard | 2027-03-27 |
+| 1.34 | standard | 2026-12-02 |
+| 1.33 | extended | 2026-07-29 (passed) |
+
+1.37 does not exist in EKS yet. This cluster runs 1.36, so `STANDARD` does
+nothing at all until **2027-08-02** - roughly eleven months away. If 1.37 and
+1.38 ship in the meantime, the cluster stays on 1.36 regardless.
+
+Check the current picture yourself:
+
+```bash
+aws eks describe-cluster-versions --query "clusterVersions[].{v:clusterVersion,status:status,eos:endOfStandardSupportDate}" --output table
+```
+
+**To actually move 1.36 → 1.37**, bump the version and apply - this is the only
+knob that upgrades a cluster on your schedule:
+
+```hcl
+# terragrunt/env/dev/env.hcl
+locals {
+  kubernetes_version = "1.37"
+}
+```
+
+```bash
+terragrunt apply --working-dir terragrunt/env/dev/region/us-east-1/eks
+```
+
+EKS upgrades one minor version at a time, so 1.36 → 1.38 must be done as two
+applies.
+
 ## ✅ What this blueprint automates, at no extra cost
 
 | Layer | Mechanism | Behaviour |
 |---|---|---|
-| Control plane | `upgradePolicy.supportType = STANDARD` | AWS force-upgrades at end of standard support (14 months), no extended-support charges |
+| Control plane | `upgradePolicy.supportType = STANDARD` | AWS force-upgrades **once**, on the end-of-standard-support date, no extended-support charges. Not a release channel |
 | Karpenter nodes | `amiSelectorTerms: alias al2023@latest` + drift detection | a new AL2023 AMI marks nodes `Drifted`; Karpenter replaces them respecting PDBs |
 | Karpenter nodes | `expireAfter: 168h` | nodes rotate weekly regardless, so nothing accumulates drift |
 | System node group | `use_latest_ami_release_version = true` | each apply moves the group onto the newest AMI for its version |
@@ -129,7 +173,16 @@ aws eks describe-cluster --name cloudgeeks-eks-dev --query "cluster.computeConfi
 
 ## 🛠️ How the policy is configured
 
-`modules/eks/main.tf`:
+Set it per environment in the Terragrunt unit
+(`terragrunt/env/dev/region/us-east-1/eks/terragrunt.hcl`):
+
+```hcl
+inputs = {
+  cluster_support_type = "STANDARD"
+}
+```
+
+The module passes it straight through in `modules/eks/main.tf`:
 
 ```hcl
 upgrade_policy = {
@@ -137,8 +190,9 @@ upgrade_policy = {
 }
 ```
 
-`cluster_support_type` defaults to `STANDARD` and rejects anything other than
-`STANDARD` or `EXTENDED`.
+`cluster_support_type` defaults to `STANDARD` and is validated to reject
+anything other than `STANDARD` or `EXTENDED`. Setting `EXTENDED` is a
+deliberate, billable choice - make it in the unit, where it is reviewable.
 
 Two constraints before you rely on switching later:
 
