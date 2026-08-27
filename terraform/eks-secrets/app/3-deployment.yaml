@@ -33,18 +33,38 @@ spec:
     spec:
       serviceAccountName: cloudgeeks-secrets
       volumes:
-      - name: secrets-store-inline
-        csi:
-          driver: secrets-store.csi.k8s.io
-          readOnly: true
-          volumeAttributes:
-            secretProviderClass: "nginx-deployment-aws-secrets"
-      containers:
-      - name: nginx-deployment
-        image: nginx:latest
-        ports:
-        - containerPort: 80
-        volumeMounts:
         - name: secrets-store-inline
-          mountPath: "/mnt/secrets-store/cloudgeeks-ca"
-          readOnly: true
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "nginx-deployment-aws-secrets"
+      containers:
+        - name: nginx-deployment
+          image: nginx:1.29-alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: secrets-store-inline
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
+          # Consume the synced Kubernetes Secret as environment variables. The
+          # sync only happens because a pod mounts the CSI volume - the
+          # SecretProviderClass alone does not create the Secret.
+          env:
+            - name: SECRET_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: eks-demo-secret
+                  key: username
+            - name: SECRET_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: eks-demo-secret
+                  key: password
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
