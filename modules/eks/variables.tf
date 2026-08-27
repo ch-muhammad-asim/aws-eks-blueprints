@@ -25,6 +25,23 @@ variable "kubernetes_version" {
   default     = "1.36"
 }
 
+variable "cluster_support_type" {
+  description = <<-EOT
+    STANDARD or EXTENDED. STANDARD means AWS automatically upgrades the control
+    plane when its Kubernetes version reaches end of standard support, which is
+    both the cheaper option and the only one the sandbox allows. EXTENDED (the
+    AWS default) keeps the cluster on an unsupported version and bills a premium
+    for it.
+  EOT
+  type        = string
+  default     = "STANDARD"
+
+  validation {
+    condition     = contains(["STANDARD", "EXTENDED"], var.cluster_support_type)
+    error_message = "cluster_support_type must be STANDARD or EXTENDED."
+  }
+}
+
 variable "environment" {
   description = "Environment name applied as a tag."
   type        = string

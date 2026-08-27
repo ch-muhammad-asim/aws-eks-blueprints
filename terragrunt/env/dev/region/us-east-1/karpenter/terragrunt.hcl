@@ -41,10 +41,14 @@ inputs = {
   # Karpenter fall back to on-demand when spot capacity is unavailable.
   capacity_types = ["on-demand"]
 
-  # 12 vCPU is six t3.medium. With the two-node system group that stays inside
-  # the sandbox's nine-instance ceiling.
-  node_cpu_limit    = 12
-  node_memory_limit = "48Gi"
+  # The binding sandbox limit is instance COUNT (nine account-wide), not vCPU.
+  # Karpenter bin-packs onto the cheapest shape that fits, which is usually
+  # t3a.small at 2 vCPU - so a 12 vCPU ceiling permits SIX nodes, and with the
+  # two-node system group that reaches eight. Too close to the cap.
+  #
+  # 8 vCPU caps Karpenter at four t3a.small, for six instances in total.
+  node_cpu_limit    = 8
+  node_memory_limit = "32Gi"
   node_disk_size    = "50Gi"
 
   node_expire_after = "168h"

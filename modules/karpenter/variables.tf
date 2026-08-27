@@ -110,18 +110,22 @@ variable "capacity_types" {
 
 variable "node_cpu_limit" {
   description = <<-EOT
-    Ceiling on total vCPU Karpenter may provision. At 2 vCPU per t3.medium, 12
-    vCPU is six nodes - which, with a two-node system group, stays inside the
+    Ceiling on total vCPU Karpenter may provision.
+
+    Size this against instance COUNT, not vCPU. Karpenter picks the cheapest
+    shape that fits, which in this NodePool is t3a.small at 2 vCPU - so every
+    2 vCPU of limit is another EC2 instance. 8 vCPU is four nodes, which with
+    the two-node system group leaves three instances of headroom under the
     sandbox's nine-instance cap.
   EOT
   type        = number
-  default     = 12
+  default     = 8
 }
 
 variable "node_memory_limit" {
   description = "Ceiling on total memory Karpenter may provision."
   type        = string
-  default     = "48Gi"
+  default     = "32Gi"
 }
 
 variable "node_disk_size" {

@@ -16,7 +16,7 @@ them by hitting them. These are the ones that matter for EKS.
 | EC2 Spot | ⛔ **Will not support** | `capacity_type = "ON_DEMAND"`, NodePool `capacity_types = ["on-demand"]` |
 | Concurrent EC2 instances | 9 (stopped included, terminated excluded) | 2-node system group + NodePool `limits.cpu = 12` (6 x t3.medium) |
 | EBS volume size | 100 GiB max | `node_disk_size` defaults to 50, with a `validation` block at 100 |
-| EKS versions | ⚠️ Standard support only - extended support blocked | `kubernetes_version = "1.36"` in `env.hcl` |
+| EKS versions | ⚠️ Standard support only - extended support blocked | `kubernetes_version = "1.36"` in `env.hcl`, plus `cluster_support_type = "STANDARD"` - see [AUTO-UPGRADE.md](AUTO-UPGRADE.md) |
 | Fargate | 4 running tasks, 2048 CPU / 4096 memory | not used here |
 | Billing / Cost Explorer | no access | nothing in this repo reads cost data |
 

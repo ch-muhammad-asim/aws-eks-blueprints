@@ -48,6 +48,14 @@ module "eks" {
 
   enabled_log_types = var.enabled_log_types
 
+  # AWS defaults this to EXTENDED, which parks the cluster on an end-of-life
+  # version at premium pricing instead of moving it forward. STANDARD makes AWS
+  # auto-upgrade the control plane when the version leaves standard support -
+  # and it is the only setting the sandbox permits.
+  upgrade_policy = {
+    support_type = var.cluster_support_type
+  }
+
   access_entries = var.create_iam_access_roles ? {
     admin = {
       principal_arn = aws_iam_role.eks_admin[0].arn

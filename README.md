@@ -161,8 +161,12 @@ kubectl scale deployment inflate --replicas 6
 ```
 
 Karpenter should launch nodes within roughly a minute. Scaling back to zero
-returns them after `consolidateAfter`. Full procedure and recorded results:
-[docs/TESTING.md](docs/TESTING.md).
+returns them after `consolidateAfter`.
+
+For a realistic end-to-end test - CPU load driving the HPA, the HPA driving
+Karpenter - use the load-testing suite, which has its own guardrails and
+recorded timings: [load-testing/](load-testing/). Blueprint-wide validation
+results are in [docs/TESTING.md](docs/TESTING.md).
 
 ---
 
@@ -194,3 +198,5 @@ terragrunt destroy --working-dir vpc
 | ⚡ [docs/KARPENTER.md](docs/KARPENTER.md) | NodePool/EC2NodeClass settings and production tuning |
 | ✅ [docs/TESTING.md](docs/TESTING.md) | Validation procedure and recorded results |
 | 🔄 [docs/MIGRATION.md](docs/MIGRATION.md) | What changed from the previous revision and why |
+| ⬆️ [docs/AUTO-UPGRADE.md](docs/AUTO-UPGRADE.md) | EKS auto upgrade, version support policy and Auto Mode |
+| 🔥 [load-testing/](load-testing/) | HPA + Karpenter load test, commands and recorded results |
