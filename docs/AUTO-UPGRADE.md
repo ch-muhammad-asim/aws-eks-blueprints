@@ -1,104 +1,123 @@
-# 🔄 EKS auto upgrade and version support policy
+# ⬆️ EKS auto upgrade - what is actually automatic
 
-## ⚠️ The default is not what you want
+Short version: **EKS has no equivalent of GKE release channels.** Nothing in
+EKS proactively moves a cluster from 1.36 to 1.37 the way GKE's regular channel
+does. What EKS gives you is a *safety net* at end of support, plus data-plane
+automation you have to assemble yourself.
 
-Amazon EKS gives every cluster an **upgrade policy**, set through the
-`upgradePolicy.supportType` property. It decides what happens when the
-cluster's Kubernetes version reaches end of standard support:
+This page is explicit about the difference, because assuming GKE behaviour and
+getting EKS behaviour is how clusters end up two versions behind.
 
-| `supportType` | Behaviour at end of standard support | Cost |
+## 🆚 EKS versus GKE
+
+| | GKE | EKS |
 |---|---|---|
-| `STANDARD` | AWS **automatically upgrades** the cluster to the next version in standard support | no extended-support charge |
-| `EXTENDED` | Cluster **enters extended support** and stays on its version | extended-support charge per cluster hour |
+| Release channels (rapid/regular/stable) | ✅ yes | ❌ none |
+| Proactive minor-version upgrades | ✅ continuous, on the channel's schedule | ❌ never - you initiate it |
+| Forced upgrade at end of life | ✅ yes | ✅ yes, if `supportType = STANDARD` |
+| Maintenance windows / exclusions | ✅ yes | ❌ not for the automatic EOL upgrade |
+| Node auto-upgrade | ✅ built in | ⚠️ Karpenter drift, or Auto Mode, or you script it |
+| Node auto-repair | ✅ built in | ✅ managed node group `nodeRepairConfig` |
+| Extra cost for any of it | free | free, except Auto Mode |
 
-Per the AWS documentation: *"Extended support is enabled by default for new
-clusters, and existing clusters."* So a cluster you create without specifying
-anything gets `EXTENDED` — it will **not** auto-upgrade, and it will start
-billing at a premium once its version ages out.
+## ✅ What this blueprint automates, at no extra cost
 
-This blueprint sets `STANDARD` explicitly.
+| Layer | Mechanism | Behaviour |
+|---|---|---|
+| Control plane | `upgradePolicy.supportType = STANDARD` | AWS force-upgrades at end of standard support (14 months), no extended-support charges |
+| Karpenter nodes | `amiSelectorTerms: alias al2023@latest` + drift detection | a new AL2023 AMI marks nodes `Drifted`; Karpenter replaces them respecting PDBs |
+| Karpenter nodes | `expireAfter: 168h` | nodes rotate weekly regardless, so nothing accumulates drift |
+| System node group | `use_latest_ami_release_version = true` | each apply moves the group onto the newest AMI for its version |
+| System node group | `nodeRepairConfig.enabled = true` | EKS replaces nodes that fail health checks |
+| Add-ons | `most_recent = true` | each apply pulls the newest compatible add-on build |
 
-Timeline: a minor version gets **14 months** of standard support, then **12
-months** of extended support. Clusters on extended support are auto-upgraded at
-the end of *that* period.
+The **control-plane minor version is the one thing left manual**: bump
+`kubernetes_version` in `terragrunt/env/dev/env.hcl` and apply. Everything else
+follows automatically - the node groups and Karpenter nodes converge on the new
+version without further intervention.
 
-## 🚧 Why this matters here
+## 💰 Cost
 
-The Pluralsight sandbox permits standard-support versions only - extended
-support is blocked on cost ([SANDBOX.md](SANDBOX.md)). A cluster left on the
-AWS default would drift into a state the sandbox forbids without anyone
-touching it.
+| Setting | Cost |
+|---|---|
+| `supportType = STANDARD` | **no additional cost** - this is the setting that *avoids* charges |
+| `supportType = EXTENDED` | extended-support premium per cluster hour once the version ages out |
+| Karpenter drift + expiry | free (you pay only for the EC2 instances either way) |
+| EKS Auto Mode | **additional management fee per instance**, on top of EC2 |
 
-Two constraints worth knowing before you rely on flipping this later:
+So the answer to "auto upgrade with no additional cost" is yes - `STANDARD` is
+strictly cheaper than the `EXTENDED` default. The only paid option is Auto Mode.
 
-- Once a cluster **has entered** extended support, you cannot disable it. The
-  cluster must be running a standard-support version to change the policy.
-- If an automatic upgrade has already been initiated, AWS does not guarantee a
-  late switch to `EXTENDED` will take effect.
+## ⚠️ Is it safe?
 
-## 🛠️ How it is configured
+Automatic *is not* the same as safe. Two things to be clear about:
 
-`modules/eks/main.tf` passes the policy to the cluster:
+- **Upgrades are one-way.** EKS cannot downgrade a control plane. If a workload
+  breaks on the new version, you roll the workload forward, not the cluster
+  back.
+- **The EOL upgrade is not schedulable.** Unlike a GKE maintenance window, you
+  do not choose when the forced upgrade lands. Treat it as a deadline, not a
+  plan.
 
-```hcl
-upgrade_policy = {
-  support_type = var.cluster_support_type
-}
-```
-
-`cluster_support_type` defaults to `STANDARD` and is validated to reject
-anything other than `STANDARD` or `EXTENDED`. To deliberately opt a
-non-sandbox cluster into extended support, set it in the Terragrunt unit:
-
-```hcl
-inputs = {
-  cluster_support_type = "EXTENDED"
-}
-```
-
-## ✅ Verification
-
-Check the live policy - this is the exact command from the AWS docs:
+What makes it safe in practice is checking readiness *before* the deadline. EKS
+ships Cluster Insights for exactly this - it flags deprecated API usage, version
+skew and add-on incompatibility:
 
 ```bash
-aws eks describe-cluster --name cloudgeeks-eks-dev --query "cluster.upgradePolicy.supportType"
+aws eks list-insights --cluster-name cloudgeeks-eks-dev --query "insights[].{name:name,category:category,status:insightStatus.status}" --output table
 ```
 
 Verified on this cluster, 2026-08-27:
 
 ```
-"STANDARD"
+|      category      |               name                 | status   |
+|  UPGRADE_READINESS |  Kubelet version skew              |  PASSING |
+|  UPGRADE_READINESS |  EKS add-on version compatibility  |  PASSING |
+|  UPGRADE_READINESS |  kube-proxy version skew           |  PASSING |
+|  UPGRADE_READINESS |  Amazon Linux 2 compatibility      |  PASSING |
+|  UPGRADE_READINESS |  Cluster health issues             |  PASSING |
 ```
 
-Confirm the running version is genuinely in standard support:
+All five checks passing means this cluster can take a version bump without a
+known blocker. Anything `ERROR` here should be fixed before the upgrade, not
+after.
 
-```bash
-aws eks describe-cluster --name cloudgeeks-eks-dev --query "cluster.version"
-```
+The other half of safety is disruption control, which the blueprint already
+sets: PodDisruptionBudgets on workloads, a NodePool disruption budget of one
+node at a time, and `terminationGracePeriod` so a stuck drain cannot hang a
+rotation forever. See [KARPENTER.md](KARPENTER.md).
+
+## 🎯 Getting closest to GKE behaviour
+
+If you want continuous upgrades rather than a 14-month safety net, the pattern
+is a scheduled pipeline, because AWS provides no channel to subscribe to:
+
+1. Query what standard support currently covers:
 
 ```bash
 aws eks describe-cluster-versions --query "clusterVersions[?status=='STANDARD_SUPPORT'].clusterVersion"
 ```
 
-At the time of writing the cluster runs `1.36`, and standard support covers
-`1.34`, `1.35` and `1.36` - so the cluster is compliant and will auto-upgrade
-rather than roll into extended support.
-
-Terraform will also show drift if someone changes the policy out of band:
+2. Gate on readiness - fail the pipeline if any insight is not `PASSING`:
 
 ```bash
-terragrunt plan --working-dir terragrunt/env/dev/region/us-east-1/eks
+aws eks list-insights --cluster-name cloudgeeks-eks-dev --query "insights[?insightStatus.status!='PASSING']"
 ```
 
-## 📌 Not to be confused with EKS Auto Mode
+3. Bump `kubernetes_version` in `terragrunt/env/dev/env.hcl` and apply:
 
-**Auto Mode** is a separate feature where AWS manages the data plane -
-provisioning nodes, and replacing the VPC CNI, CoreDNS, kube-proxy, the EBS CSI
-driver, the Load Balancer Controller and *Karpenter itself* with managed
-service functionality.
+```bash
+terragrunt apply --working-dir terragrunt/env/dev/region/us-east-1/eks
+```
 
-It is **off** by default and off here, because this blueprint runs its own
-Karpenter installation. Check it with:
+Nodes follow on their own: the managed node group updates with the cluster, and
+Karpenter marks its nodes drifted and rotates them.
+
+The alternative is **EKS Auto Mode**, which is the genuine GKE-Autopilot
+analogue - AWS manages nodes and replaces the CNI, CoreDNS, kube-proxy, the EBS
+CSI driver, the Load Balancer Controller and Karpenter with service
+functionality. It carries a per-instance management fee, and it makes the
+`karpenter` unit in this repo redundant. It is off here:
 
 ```bash
 aws eks describe-cluster --name cloudgeeks-eks-dev --query "cluster.computeConfig"
@@ -108,8 +127,46 @@ aws eks describe-cluster --name cloudgeeks-eks-dev --query "cluster.computeConfi
 { "enabled": false, "nodePools": [] }
 ```
 
-If you ever enable Auto Mode, the `karpenter` Terragrunt unit becomes redundant
-and should be destroyed first.
+## 🛠️ How the policy is configured
+
+`modules/eks/main.tf`:
+
+```hcl
+upgrade_policy = {
+  support_type = var.cluster_support_type
+}
+```
+
+`cluster_support_type` defaults to `STANDARD` and rejects anything other than
+`STANDARD` or `EXTENDED`.
+
+Two constraints before you rely on switching later:
+
+- Once a cluster **has entered** extended support, you cannot disable it. The
+  cluster must be on a standard-support version to change the policy.
+- If an automatic upgrade has already been initiated, AWS does not guarantee a
+  late switch to `EXTENDED` takes effect.
+
+## ✅ Verification
+
+```bash
+aws eks describe-cluster --name cloudgeeks-eks-dev --query "cluster.upgradePolicy.supportType"
+```
+
+Verified 2026-08-27: `"STANDARD"`
+
+```bash
+aws eks describe-cluster --name cloudgeeks-eks-dev --query "cluster.version"
+```
+
+Verified: `"1.36"` - in standard support, so the cluster is compliant and will
+auto-upgrade rather than roll into extended support.
+
+Drift is caught by Terraform if anyone changes it out of band:
+
+```bash
+terragrunt plan --working-dir terragrunt/env/dev/region/us-east-1/eks
+```
 
 ## 📚 Official AWS documentation
 
@@ -118,10 +175,12 @@ and should be destroyed first.
 | Kubernetes versions and the support lifecycle | https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html |
 | View current cluster upgrade policy | https://docs.aws.amazon.com/eks/latest/userguide/view-upgrade-policy.html |
 | Edit cluster upgrade policy | https://docs.aws.amazon.com/eks/latest/userguide/edit-upgrade-policy.html |
-| Versions on standard support (release notes) | https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html |
+| Versions on standard support | https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html |
 | Versions on extended support | https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-extended.html |
 | Update a cluster to a new Kubernetes version | https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html |
+| Cluster Insights (upgrade readiness) | https://docs.aws.amazon.com/eks/latest/userguide/cluster-insights.html |
+| Update a managed node group | https://docs.aws.amazon.com/eks/latest/userguide/update-managed-node-group.html |
+| Node health and auto repair | https://docs.aws.amazon.com/eks/latest/userguide/node-health.html |
 | Cluster upgrade best practices | https://docs.aws.amazon.com/eks/latest/best-practices/cluster-upgrades.html |
 | EKS Auto Mode | https://docs.aws.amazon.com/eks/latest/userguide/automode.html |
-| Updating an Auto Mode cluster | https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html |
-| `update-cluster-config` CLI reference | https://docs.aws.amazon.com/cli/latest/reference/eks/update-cluster-config.html |
+| Karpenter drift | https://karpenter.sh/docs/concepts/disruption/#drift |

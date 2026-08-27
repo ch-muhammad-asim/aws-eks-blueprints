@@ -27,7 +27,7 @@ its guardrails - see [docs/SANDBOX.md](docs/SANDBOX.md).
   VPC            10.60.0.0/16, 3 AZs, private + public tiers, single NAT
                  private subnets tagged karpenter.sh/discovery
 
-  EKS            control plane (standard-support version)
+  EKS            control plane (standard-support version, auto-upgrade on)
                  access entries (API auth mode) - no aws-auth ConfigMap
                  add-ons: vpc-cni, kube-proxy, coredns, pod-identity-agent,
                           metrics-server, ebs-csi (EKS Pod Identity)
@@ -85,7 +85,7 @@ each module usable across every environment and region.
 | Helm provider | ~> 3.0 |
 | `terraform-aws-modules/eks/aws` | ~> 21.25 |
 | `terraform-aws-modules/vpc/aws` | ~> 6.7 |
-| Kubernetes / EKS | 1.36 (standard support) |
+| Kubernetes / EKS | 1.36 (standard support, auto-upgrade on) |
 | Karpenter | 1.14.1 (v1 APIs) |
 | Node AMI | AL2023 |
 
@@ -198,5 +198,5 @@ terragrunt destroy --working-dir vpc
 | ⚡ [docs/KARPENTER.md](docs/KARPENTER.md) | NodePool/EC2NodeClass settings and production tuning |
 | ✅ [docs/TESTING.md](docs/TESTING.md) | Validation procedure and recorded results |
 | 🔄 [docs/MIGRATION.md](docs/MIGRATION.md) | What changed from the previous revision and why |
-| ⬆️ [docs/AUTO-UPGRADE.md](docs/AUTO-UPGRADE.md) | EKS auto upgrade, version support policy and Auto Mode |
+| ⬆️ [docs/AUTO-UPGRADE.md](docs/AUTO-UPGRADE.md) | What EKS auto-upgrades (and what it does not, versus GKE) |
 | 🔥 [load-testing/](load-testing/) | HPA + Karpenter load test, commands and recorded results |

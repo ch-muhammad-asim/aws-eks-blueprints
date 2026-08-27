@@ -167,6 +167,12 @@ module "eks" {
       ebs_optimized     = true
       enable_monitoring = true
 
+      # Roll the node group onto the newest EKS-optimised AMI for its Kubernetes
+      # version on every apply. This is how kernel and CVE patches reach the
+      # system nodes - a managed node group does NOT patch itself. Karpenter
+      # nodes handle this on their own through drift detection.
+      use_latest_ami_release_version = var.node_use_latest_ami
+
       block_device_mappings = {
         xvda = {
           device_name = "/dev/xvda"

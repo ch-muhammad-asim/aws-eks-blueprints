@@ -94,6 +94,19 @@ variable "node_desired_size" {
   default     = 2
 }
 
+variable "node_use_latest_ami" {
+  description = <<-EOT
+    Move the system node group to the newest EKS-optimised AMI release on every
+    apply. Managed node groups never patch themselves, so without this the
+    system nodes keep whatever AMI they were created with until someone
+    intervenes. The trade-off is that a new AMI release shows up as a node
+    replacement in the next plan - which is the point, but run it through a
+    pipeline rather than being surprised by it.
+  EOT
+  type        = bool
+  default     = true
+}
+
 variable "node_disk_size" {
   description = "Root volume size in GiB. The sandbox caps volumes at 100 GiB."
   type        = number

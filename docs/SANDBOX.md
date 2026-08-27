@@ -39,7 +39,10 @@ delegation is enabled on the CNI so pod IP allocation is not the binding
 constraint, but expect roughly 8-12 usable application pods per node.
 
 **Extended-support versions are blocked on cost**, so a cluster left running
-past a version's standard-support window cannot simply sit there. Check what is
+past a version's standard-support window cannot simply sit there. Note that AWS
+defaults every cluster to `upgradePolicy.supportType = EXTENDED`, which would
+drift straight into the forbidden state - this blueprint sets `STANDARD`
+explicitly, see [AUTO-UPGRADE.md](AUTO-UPGRADE.md). Check what is
 current before pinning:
 
 ```bash

@@ -76,6 +76,23 @@ Discovery by tag resolved three private subnets and the shared node security
 group, confirming the `karpenter.sh/discovery` tags on the VPC and EKS layers
 line up.
 
+## ⬆️ Upgrade readiness
+
+`upgradePolicy.supportType` verified as `STANDARD`, so the cluster auto-upgrades
+at end of standard support instead of entering paid extended support. All five
+EKS Cluster Insights upgrade-readiness checks report `PASSING`:
+
+```
+UPGRADE_READINESS   Kubelet version skew               PASSING
+UPGRADE_READINESS   EKS add-on version compatibility   PASSING
+UPGRADE_READINESS   kube-proxy version skew            PASSING
+UPGRADE_READINESS   Amazon Linux 2 compatibility       PASSING
+UPGRADE_READINESS   Cluster health issues              PASSING
+```
+
+Auto Mode confirmed off (`computeConfig.enabled: false`), which is correct for a
+cluster running its own Karpenter. Details in [AUTO-UPGRADE.md](AUTO-UPGRADE.md).
+
 ## 📈 Scale-up
 
 `kubectl scale deployment inflate --replicas 6` (6 x 500m CPU request):
